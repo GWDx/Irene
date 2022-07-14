@@ -2,7 +2,6 @@ import os
 import time
 from sgfmill import sgf
 from go import Go
-import matplotlib.pyplot as plt
 
 with open('test.sgf', 'rb') as f:
     game = sgf.Sgf_game.from_bytes(f.read())
@@ -27,7 +26,7 @@ for move in validSequence:
 
 go = Go()
 
-index = 0
+start = time.time()
 
 for move in validSequence:
     if move[0] == 'w':
@@ -37,9 +36,7 @@ for move in validSequence:
     x = move[1][0]
     y = move[1][1]
     go.move(color, x, y)
-    print(go.board)
-    # # use matplotlib to visualize the board
-    # plt.imshow(go.board)
-    # # save the image
-    # plt.savefig('image/{}.png'.format(index))
-    # index += 1
+    # print(go.board)
+
+end = time.time()
+print('time:', end - start)

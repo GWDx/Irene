@@ -25,8 +25,16 @@ class Go:
         anotherColor = 3 - color
         self.board[x, y] = color
 
-        self.clearColor(anotherColor)
-        self.clearColor(color)
+        if x > 0:
+            self.clearColorNear(anotherColor, x - 1, y)
+        if x < self.size - 1:
+            self.clearColorNear(anotherColor, x + 1, y)
+        if y > 0:
+            self.clearColorNear(anotherColor, x, y - 1)
+        if y < self.size - 1:
+            self.clearColorNear(anotherColor, x, y + 1)
+
+        self.clearColorNear(color, x, y)
 
         if self.board[x, y] == 0:
             self.board = self.previousBoard
@@ -34,11 +42,14 @@ class Go:
 
         return True
 
-    def clearColor(self, color):
+    def clearColorNear(self, color, x, y):
+        if self.board[x, y] != color:
+            return
+
         visited = np.zeros((self.size, self.size), dtype=np.int32)
         boardGroup = np.zeros((self.size, self.size), dtype=np.int32)
 
-        def dfs(colorBoard, x, y, groupIndex):
+        def dfs(colorBoard, x, y):
             if visited[x, y] == 1:
                 return
             if colorBoard[x, y] == 0:
@@ -46,31 +57,25 @@ class Go:
                     allLiberityPosition.add((x, y))
                 return
             visited[x, y] = 1
-            boardGroup[x, y] = groupIndex
+            boardGroup[x, y] = 1
 
             if x > 0:
-                dfs(colorBoard, x - 1, y, groupIndex)
+                dfs(colorBoard, x - 1, y)
             if x < self.size - 1:
-                dfs(colorBoard, x + 1, y, groupIndex)
+                dfs(colorBoard, x + 1, y)
             if y > 0:
-                dfs(colorBoard, x, y - 1, groupIndex)
+                dfs(colorBoard, x, y - 1)
             if y < self.size - 1:
-                dfs(colorBoard, x, y + 1, groupIndex)
+                dfs(colorBoard, x, y + 1)
 
         colorBoard = self.board == color
 
-        groupIndex = 1
-        for x in range(self.size):
-            for y in range(self.size):
-                if visited[x, y] == 0 and colorBoard[x, y] == 1:
-                    allLiberityPosition = set()
-                    dfs(colorBoard, x, y, groupIndex)
+        allLiberityPosition = set()
+        dfs(colorBoard, x, y)
 
-                    # dead group
-                    if len(allLiberityPosition) == 0:
-                        self.board[boardGroup == groupIndex] = 0
-
-                    groupIndex += 1
+        # dead group
+        if len(allLiberityPosition) == 0:
+            self.board[boardGroup == 1] = 0
 
 
 if __name__ == '__main__':
