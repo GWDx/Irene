@@ -2,6 +2,7 @@ import os
 from sgfmill import sgf
 from go import *
 import torch
+import matplotlib.pyplot as plt
 
 
 def prepareSgfFile(fileName):
@@ -23,19 +24,27 @@ def prepareSgfFile(fileName):
     outputData = []
 
     for move in validSequence:
-        if move[0] == 'w':
+        if move[0] == 'b':
             color = 1
         else:
             color = 2
         x = move[1][0]
         y = move[1][1]
-        go.move(color, x, y)
-        inputData.append(go.board)
+        board = np.array(go.board)
+        if color == 2:
+            for i in range(19):
+                for j in range(19):
+                    if board[i, j] > 0:
+                        board[i, j] = 3 - board[i, j]
+        inputData.append(board)
         outputData.append(toDigit(x, y))
 
+        if go.move(color, x, y) == False:
+            raise Exception('Invalid move')
+
     # use torch to load data
-    inputData = torch.tensor(np.array(inputData)).reshape(-1, 1, 19, 19)
-    outputData = torch.tensor(np.array(outputData)).long().reshape(-1, 1)
+    inputData = torch.tensor(np.array(inputData)).reshape(-1, 19, 19)
+    outputData = torch.tensor(np.array(outputData)).long().reshape(-1)
 
     return inputData, outputData
 
@@ -57,14 +66,22 @@ def prepareData():
             allOutputData.append(outputData)
 
             count += 1
-            if count % 2000 == 0:
+            if count % 1000 == 0:
                 break
                 print(f'Processed {count} files')
         except:
             print('Error: ' + sgfFile)
 
-    allInputData = torch.cat(allInputData)
+    allInputData = torch.cat(allInputData).reshape(-1, 1, 19, 19)
     allOutputData = torch.cat(allOutputData)
+
+    # allInputData, allOutputData = prepareSgfFile('test.sgf')
+    # allInputData = allInputData.reshape(-1, 1, 19, 19)
+
+    plt.imshow(allInputData[1].squeeze())
+    print(toPosition(allOutputData[0]))
+    print(toPosition(allOutputData[1]))
+    # plt.show()
 
     torch.save((allInputData, allOutputData), 'data.pt')
 
