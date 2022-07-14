@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 
 class Go:
@@ -76,6 +77,18 @@ class Go:
         # dead group
         if len(allLiberityPosition) == 0:
             self.board[boardGroup == 1] = 0
+
+
+def toDigit(x, y):
+    return x * 19 + y
+
+
+def toPosition(digit):
+    if isinstance(digit, torch.Tensor):
+        digit = digit.item()
+    x = digit // 19
+    y = digit % 19
+    return x, y
 
 
 if __name__ == '__main__':
