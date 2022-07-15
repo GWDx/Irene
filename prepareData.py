@@ -3,8 +3,10 @@ from sgfmill import sgf
 from go import *
 import torch
 import matplotlib.pyplot as plt
+from numba import jit
 
 
+# @jit
 def prepareSgfFile(fileName):
     with open(fileName, 'rb') as f:
         game = sgf.Sgf_game.from_bytes(f.read())
@@ -27,15 +29,12 @@ def prepareSgfFile(fileName):
         if move[0] == 'b':
             color = 1
         else:
-            color = 2
+            color = -1
         x = move[1][0]
         y = move[1][1]
         board = np.array(go.board)
-        if color == 2:
-            for i in range(19):
-                for j in range(19):
-                    if board[i, j] > 0:
-                        board[i, j] = 3 - board[i, j]
+        if color == -1:
+            board = -board
         inputData.append(board)
         outputData.append(toDigit(x, y))
 
@@ -43,7 +42,7 @@ def prepareSgfFile(fileName):
             raise Exception('Invalid move')
 
     # use torch to load data
-    inputData = torch.tensor(np.array(inputData)).reshape(-1, 19, 19)
+    inputData = torch.tensor(np.array(inputData)).int().reshape(-1, 19, 19)
     outputData = torch.tensor(np.array(outputData)).long().reshape(-1)
 
     return inputData, outputData
@@ -66,7 +65,7 @@ def prepareData():
             allOutputData.append(outputData)
 
             count += 1
-            if count % 1000 == 0:
+            if count % 2000 == 0:
                 break
                 print(f'Processed {count} files')
         except:

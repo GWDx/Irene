@@ -105,11 +105,11 @@ def train(epoch=10):
         torch.save(net.state_dict(), 'net.pt')
 
 
-train(100)
+train(5)
 
 
 def testFinal():
-    inputData = torch.zeros(1, 1, 19, 19).long().to(device)
+    inputData = torch.zeros(1, 1, 19, 19).int().to(device)
 
     output = net(inputData)
 

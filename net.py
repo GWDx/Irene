@@ -21,10 +21,12 @@ class Net(nn.Module):
         self.conv4 = nn.ConvTranspose2d(24, 1, kernel_size=3, stride=1, padding=1)
 
     def forward(self, x):
+        blank = x == 0
         x = F.relu(self.conv1(x.float()))
         x = F.relu(self.conv2(x))
         x = F.relu(self.conv3(x))
         x = self.conv4(x)
+        x = blank.float() * x
         x = x.view(-1, 19 * 19)
         x = F.log_softmax(x, dim=1)
         return x

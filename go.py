@@ -23,7 +23,7 @@ class Go:
         self.previousMove = (x, y)
         self.previousBoard = self.board
 
-        anotherColor = 3 - color
+        anotherColor = -color
         self.board[x, y] = color
 
         if x > 0:
