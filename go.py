@@ -1,13 +1,16 @@
 import numpy as np
 import torch
+import time
+from sgfmill import sgf
 
 
 class Go:
     def __init__(self, size=19):
         self.size = size
-        self.board = np.zeros((size, size), dtype=np.int32)
+        self.board = np.zeros((size, size), dtype=np.int8)
         self.previousMove = (-1, -1)  # 避免打劫
-        self.previousBoard = np.zeros((size, size), dtype=np.int32)
+        self.previousBoard = np.zeros((size, size), dtype=np.int8)
+        self.liberty = np.zeros((size, size), dtype=np.int8)
 
     def move(self, color, x, y):
         # 检查是否合法
@@ -74,9 +77,12 @@ class Go:
         allLiberityPosition = set()
         dfs(colorBoard, x, y)
 
+        liberties = len(allLiberityPosition)
         # dead group
-        if len(allLiberityPosition) == 0:
+        if liberties == 0:
             self.board[boardGroup == 1] = 0
+        else:
+            self.liberty[boardGroup == 1] = liberties
 
 
 def toDigit(x, y):
@@ -91,7 +97,7 @@ def toPosition(digit):
     return x, y
 
 
-if __name__ == '__main__':
+def testKill():
     go = Go()
     #     3 4 5 6
     # 15    B W
@@ -100,19 +106,71 @@ if __name__ == '__main__':
     go.move(1, 15, 4)
     assert go.move(2, 15, 4) == False
 
-    go.move(2, 15, 5)
+    go.move(-1, 15, 5)
     go.move(1, 16, 3)
-    go.move(2, 16, 4)
+    go.move(-1, 16, 4)
     go.move(1, 17, 4)
-    go.move(2, 17, 5)
+    go.move(-1, 17, 5)
     go.move(1, 16, 5)
-    go.move(2, 16, 6)
+    go.move(-1, 16, 6)
+
+    print(go.board)
 
     assert go.board[16, 4] == 0
 
     go.move(1, 4, 4)
-    go.move(2, 16, 4)
+    go.move(-1, 16, 4)
 
     assert go.move(1, 16, 4) == False
 
     print(go.board)
+
+
+def testLiberty():
+    go = Go()
+    go.move(1, 4, 4)
+    go.move(1, 4, 5)
+    go.move(1, 4, 6)
+    go.move(1, 5, 4)
+    go.move(-1, 5, 5)
+
+    print(go.board)
+    print(go.liberty)
+
+    assert go.liberty[4, 4] == go.liberty[4, 5] == go.liberty[4, 6] == go.liberty[5, 4] == 8
+    assert go.liberty[5, 5] == 2
+
+
+def testTime():
+    with open('test.sgf', 'rb') as f:
+        game = sgf.Sgf_game.from_bytes(f.read())
+    sequence = game.get_main_sequence()
+
+    validSequence = []
+    for node in sequence:
+        # print(node.get_move())
+        move = node.get_move()
+        if move[1]:
+            validSequence.append(move)
+    # for move in validSequence:
+    #     print(move)
+    go = Go()
+
+    start = time.time()
+    for move in validSequence:
+        if move[0] == 'w':
+            color = 1
+        else:
+            color = 2
+        x = move[1][0]
+        y = move[1][1]
+        go.move(color, x, y)
+        # print(go.board)
+    end = time.time()
+    print('time:', end - start)
+
+
+if __name__ == '__main__':
+    testKill()
+    testLiberty()
+    testTime()

@@ -1,5 +1,6 @@
 from net import *
 from go import *
+from features import getAllFeatures
 import torch
 import sys
 
@@ -44,7 +45,9 @@ while True:
                 print('ok')
     elif line.startswith('genmove'):
         turn = -1 if line.split()[1] == 'b' else 1
-        predict = net(torch.tensor(np.array(go.board)).int().reshape(-1, 19, 19))
+        features = getAllFeatures(go, turn)
+        features = torch.tensor(features).bool()
+        predict = net(features)
         predictIndex = torch.argmax(predict)
         x, y = toPosition(predictIndex)
         if go.move(turn, x, y) == False:

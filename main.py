@@ -4,9 +4,9 @@ from prepareData import *
 from net import *
 
 # use cuda if available
-device = torch.device("cpu")
+device = torch.device('cpu')
 if torch.cuda.is_available():
-    device = torch.device("cuda")
+    device = torch.device('cuda')
 
 
 def loadData():
@@ -39,8 +39,7 @@ def train(epoch=10):
 
     logNumber = 100
 
-    testBatchSize = 1000
-    testBatchCount = int(len(testInputData) / testBatchSize)
+    testBatchCount = int(len(testInputData) / batchSize)
     totalLoss = 0
     totalCorrectCount = 0
 
@@ -84,8 +83,8 @@ def train(epoch=10):
         # test
         with torch.no_grad():
             for i in range(testBatchCount):
-                testInputDataBatch = testInputData[i * testBatchSize:(i + 1) * testBatchSize]
-                testOutputDataBatch = testOutputData[i * testBatchSize:(i + 1) * testBatchSize].reshape(-1)
+                testInputDataBatch = testInputData[i * batchSize:(i + 1) * batchSize]
+                testOutputDataBatch = testOutputData[i * batchSize:(i + 1) * batchSize].reshape(-1)
 
                 testInputDataBatch = testInputDataBatch.to(device)
                 testOutputDataBatch = testOutputDataBatch.to(device)
@@ -105,18 +104,4 @@ def train(epoch=10):
         torch.save(net.state_dict(), 'net.pt')
 
 
-train(5)
-
-
-def testFinal():
-    inputData = torch.zeros(1, 1, 19, 19).int().to(device)
-
-    output = net(inputData)
-
-    outputIndex = torch.argmax(output)
-    x, y = toPosition(outputIndex)
-
-    print(x, y)
-
-
-testFinal()
+train(100)

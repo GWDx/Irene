@@ -2,6 +2,7 @@ from net import *
 from go import *
 import torch
 import matplotlib.pyplot as plt
+from features import getAllFeatures
 
 # load net.pt
 net = Net()
@@ -12,16 +13,14 @@ go = Go()
 count = 1
 
 while True:
-    board = np.array(go.board)
     if count % 2 == 1:
         turn = 1
     else:
         turn = -1
 
-    if turn == -1:
-        board = -board
-    inputData = torch.tensor(board).int().reshape(-1, 19, 19)
-    predict = net(inputData)
+    features = getAllFeatures(go, turn)
+    features = torch.tensor(features).bool()
+    predict = net(features)
     predictIndex = torch.argmax(predict)
     x, y = toPosition(predictIndex)
 
