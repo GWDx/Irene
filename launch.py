@@ -1,4 +1,3 @@
-import gtp
 from net import *
 from go import *
 import torch
