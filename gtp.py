@@ -26,9 +26,11 @@ for i in range(19):
     if char == ord('I'):
         char += 1
 
+colorCharToIndex = {'B': 1, 'W': -1, 'b': 1, 'w': -1}
+
 while True:
     # implement GTP (Go Text Protocol)
-    line = input()
+    line = input().strip()
     if line == 'quit':
         break
     print('= ', end='')
@@ -56,26 +58,31 @@ while True:
             x = 19 - int(x)
             y = charToIndex[y]
 
-            color = 1 if color == 'B' else -1
+            color = colorCharToIndex[color]
 
             if go.move(-1, x, y) == False:
                 print('Illegal move')
             else:
                 print('ok')
     elif line.startswith('genmove'):
-        turn = -1 if line.split()[1] == 'b' else 1
-        features = getAllFeatures(go, turn)
+        willPlayColor = colorCharToIndex[line.split()[1]]
+        features = getAllFeatures(go, willPlayColor)
         features = torch.tensor(features).bool().reshape(1, -1, 19, 19)
-        predict = net(features)
-        predictIndex = torch.argmax(predict)
-        x, y = toPosition(predictIndex)
+        predict = net(features)[0]
+        predictReverseSortIndex = reversed(torch.argsort(predict))
 
-        if go.move(turn, x, y) == False:
-            print('Wrong move')
-        else:
+        for predictIndex in predictReverseSortIndex:
+            x, y = toPosition(predictIndex)
+            moveResult = go.move(willPlayColor, x, y)
+
             x = 19 - x
             y = indexToChar[y]
-            print(f'{y}{x}')
+
+            if moveResult == False:
+                sys.stderr.write(f'Illegal move: {x}{y}\n')
+            else:
+                print(f'{y}{x}')
+                break
 
     elif line.startswith('showboard'):
         for i in range(19):

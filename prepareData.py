@@ -27,15 +27,15 @@ def prepareSgfFile(fileName):
 
     for move in validSequence:
         if move[0] == 'b':
-            color = 1
+            willPlayColor = 1
         else:
-            color = -1
+            willPlayColor = -1
         x = move[1][0]
         y = move[1][1]
-        inputData.append(getAllFeatures(go, color))
+        inputData.append(getAllFeatures(go, willPlayColor))
         outputData.append(toDigit(x, y))
 
-        if go.move(color, x, y) == False:
+        if go.move(willPlayColor, x, y) == False:
             raise Exception('Invalid move')
 
     # use torch to load data

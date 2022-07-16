@@ -9,9 +9,9 @@ import numpy as np
 from go import Go
 
 
-def colorStoneFeatures(board, currentColor):
+def colorStoneFeatures(board, willPlayColor):
     # blank, this color, opponent color
-    if currentColor == 1:
+    if willPlayColor == 1:
         features = [board == 0, board == 1, board == -1]
     else:
         features = [board == 0, board == -1, board == 1]
@@ -46,13 +46,13 @@ def recentOnehotFeatures(history, length=8):
     return features
 
 
-def getAllFeatures(go, currentColor):
+def getAllFeatures(go, willPlayColor):
     board = go.board
     liberty = go.liberty
     history = go.history
 
     allFeatures = [
-        colorStoneFeatures(board, currentColor),
+        colorStoneFeatures(board, willPlayColor),
         onesFeatures(),
         libertiesFeatures(liberty),
         # zeros_features(),
