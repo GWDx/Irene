@@ -20,8 +20,8 @@ def loadData():
 
 
 net = Net()
-optimizer = torch.optim.Adam(net.parameters(), lr=0.0001)
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
+optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.5)
 loss_function = nn.NLLLoss()
 
 
@@ -111,7 +111,7 @@ def train(epoch=10):
             correctRate = totalCorrectCount / len(testInputData)
             avgLoss = totalLoss / testBatchCount
             learningRate = optimizer.param_groups[0]['lr']
-            print(f'epoch: {epoch:3}                  correctRate: {correctRate:.2%}   avgLoss: {avgLoss:.2f}   '
+            print(f'epoch: {epoch:3}                  correctRate: {correctRate:2.2%}   avgLoss: {avgLoss:.2f}   '
                   f'learningRate: {learningRate}')
         # save net
         torch.save(net.state_dict(), 'net.pt')

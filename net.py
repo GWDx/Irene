@@ -26,7 +26,7 @@ from go import *
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(12, 32, 3, padding=1)
+        self.conv1 = nn.Conv2d(20, 32, 3, padding=1)
         self.conv2 = nn.Conv2d(32, 32, 3, padding=1)
         self.conv3 = nn.Conv2d(32, 32, 3, padding=1)
         self.conv4 = nn.Conv2d(32, 32, 3, padding=1)
@@ -34,6 +34,7 @@ class Net(nn.Module):
         self.linear = nn.Linear(19 * 19, 19 * 19)
 
     def forward(self, x):
+        blank = x[:, 0]
         x = x.float()
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
@@ -42,5 +43,7 @@ class Net(nn.Module):
         x = self.conv5(x)
         x = x.view(-1, 19 * 19)
         x = self.linear(x)
+        assert x.max() > 1e-25
+        x = x * blank.view(-1, 19 * 19) + 1e-30
         x = F.log_softmax(x, dim=1)
         return x

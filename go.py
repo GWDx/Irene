@@ -7,10 +7,11 @@ from sgfmill import sgf
 class Go:
     def __init__(self, size=19):
         self.size = size
-        self.board = np.zeros((size, size), dtype=np.int8)
         self.previousMove = (-1, -1)  # 避免打劫
-        self.previousBoard = np.zeros((size, size), dtype=np.int8)
+        self.board = np.zeros((size, size), dtype=np.int8)
         self.liberty = np.zeros((size, size), dtype=np.int8)
+        self.previousBoard = np.zeros((size, size), dtype=np.int8)
+        self.history = [None] * 8
 
     def move(self, color, x, y):
         # 检查是否合法
@@ -43,6 +44,8 @@ class Go:
         if self.board[x, y] == 0:
             self.board = self.previousBoard
             return False
+
+        self.history.append((x, y))
 
         return True
 
