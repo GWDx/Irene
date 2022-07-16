@@ -15,6 +15,17 @@ count = 1
 # stderr output 'GTP ready'
 sys.stderr.write('GTP ready\n')
 
+indexToChar = []
+charToIndex = {}
+char = ord('A')
+
+for i in range(19):
+    indexToChar.append(chr(char))
+    charToIndex[chr(char)] = i
+    char += 1
+    if char == ord('I'):
+        char += 1
+
 while True:
     # implement GTP (Go Text Protocol)
     line = input()
@@ -26,7 +37,7 @@ while True:
     elif line.startswith('komi'):
         print('komi')
     if line == 'clear_board':
-        go.board = np.zeros((19, 19), dtype=np.int8)
+        go = Go()
         print('clear_board')
     elif line.startswith('play'):
         # play B F12
@@ -35,10 +46,18 @@ while True:
             print('play PASS')
         else:
             # position = F12
-            x, y = position[0], position[1:]
-            x = ord(x) - ord('A')
-            y = int(y) - 1
+            y, x = position[0], position[1:]
+
+            #    A B C D E F G H J K L M N O P Q R S T
+            # 19
+            # 18
+            # 17
+
+            x = 19 - int(x)
+            y = charToIndex[y]
+
             color = 1 if color == 'B' else -1
+
             if go.move(-1, x, y) == False:
                 print('Illegal move')
             else:
@@ -46,14 +65,18 @@ while True:
     elif line.startswith('genmove'):
         turn = -1 if line.split()[1] == 'b' else 1
         features = getAllFeatures(go, turn)
-        features = torch.tensor(features).bool()
+        features = torch.tensor(features).bool().reshape(1, -1, 19, 19)
         predict = net(features)
         predictIndex = torch.argmax(predict)
         x, y = toPosition(predictIndex)
+
         if go.move(turn, x, y) == False:
-            print('Illegal move')
+            print('Wrong move')
         else:
-            print(f'{chr(x + ord("A"))}{y + 1}')
+            x = 19 - x
+            y = indexToChar[y]
+            print(f'{y}{x}')
+
     elif line.startswith('showboard'):
         for i in range(19):
             for j in range(19):

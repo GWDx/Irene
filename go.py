@@ -14,7 +14,10 @@ class Go:
         self.history = [None] * 8
 
     def move(self, color, x, y):
-        # 检查是否合法
+        # 0. 检查输入是否合法
+        if x < 0 or x >= self.size or y < 0 or y >= self.size:
+            return False
+
         # 1. 检查是否已经有棋子
         if self.board[x, y] > 0:
             return False
