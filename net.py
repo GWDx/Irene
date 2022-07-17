@@ -1,4 +1,3 @@
-from re import S
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -61,8 +60,9 @@ class ValueNetwork(nn.Module):
         self.conv1 = nn.Conv2d(20, 16, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1)
         self.conv3 = nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1)
-        self.conv4 = nn.Conv2d(16, 1, kernel_size=3, stride=1, padding=1)
-        self.linear = nn.Linear(19 * 19, 1)
+        self.conv4 = nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1)
+        self.conv5 = nn.Conv2d(16, 2, kernel_size=3, stride=1, padding=1)
+        self.linear = nn.Linear(2 * 19 * 19, 1)
 
     def forward(self, x):
         x = x.float()
@@ -70,7 +70,8 @@ class ValueNetwork(nn.Module):
         x = F.relu(self.conv2(x))
         x = F.relu(self.conv3(x))
         x = F.relu(self.conv4(x))  # 是否需要 relu？
-        x = x.view(-1, 19 * 19)
+        x = self.conv5(x)
+        x = x.view(-1, 2 * 19 * 19)
         x = self.linear(x)
         x = x.view(-1)
         x = torch.sigmoid(x)

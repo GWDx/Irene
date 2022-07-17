@@ -4,3 +4,4 @@ jgdb
 *.pyc
 *.pt
 image
+valueOutput.txt

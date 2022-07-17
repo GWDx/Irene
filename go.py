@@ -7,11 +7,10 @@ from sgfmill import sgf
 class Go:
     def __init__(self, size=19):
         self.size = size
-        self.previousMove = (-1, -1)  # 避免打劫
         self.board = np.zeros((size, size), dtype=np.int8)
         self.liberty = np.zeros((size, size), dtype=np.int8)
         self.previousBoard = np.zeros((size, size), dtype=np.int8)
-        self.history = [None] * 8
+        self.history = [(None, None)] * 8
 
     def move(self, color, x, y):
         # 0. 检查输入是否合法
@@ -19,18 +18,22 @@ class Go:
             return False
 
         # 1. 检查是否已经有棋子
-        if self.board[x, y] > 0:
+        if self.board[x, y] != 0:
             return False
-
-        # 2. 检查打劫
-        if self.previousMove == (x, y):
-            return False
-
-        # 3. 落子，移除没有 liberty 的棋子
-        self.previousMove = (x, y)
-        self.previousBoard = self.board
 
         anotherColor = -color
+        # 2. 检查打劫
+        if self.history[-2] == (x, y):
+            # 如果周围全是对方的棋子
+            if (x == 0 or self.board[x - 1, y] == anotherColor) and \
+               (y == 0 or self.board[x, y - 1] == anotherColor) and \
+               (x == self.size - 1 or self.board[x + 1, y] == anotherColor) and \
+               (y == self.size - 1 or self.board[x, y + 1] == anotherColor):
+                return False
+
+        # 3. 落子，移除没有 liberty 的棋子
+        self.previousBoard = np.array(self.board)
+
         self.board[x, y] = color
 
         if x > 0:

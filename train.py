@@ -2,6 +2,7 @@ from sgfmill import sgf
 from go import *
 from prepareData import *
 from net import *
+import sys
 
 # use cuda if available
 device = torch.device('cpu')
@@ -14,7 +15,7 @@ torch.cuda.manual_seed_all(0)
 np.random.seed(0)
 
 
-def trainPolicy(net, epoch=10):
+def trainPolicy(net, outputFileName, epoch=10):
     optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.5)
     loss_function = nn.NLLLoss()
@@ -104,14 +105,14 @@ def trainPolicy(net, epoch=10):
             correctRate = totalCorrectCount / len(testInputData)
             avgLoss = totalLoss / testBatchCount
             learningRate = optimizer.param_groups[0]['lr']
-            print(f'epoch: {epoch:3}                  correctRate: {correctRate:2.2%}   avgLoss: {avgLoss:.2f}   '
+            print(f'epoch: {epoch:3}                  correctRate: {correctRate:>2.2%}   avgLoss: {avgLoss:.2f}   '
                   f'learningRate: {learningRate}')
         # save net
-        torch.save(net.state_dict(), 'policyNet.pt')
+        torch.save(net.state_dict(), outputFileName)
 
 
 # valueData
-def trainValue(net, epoch=10):
+def trainValue(net, outputFileName, epoch=10):
     optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.5)
     loss_function = nn.MSELoss()
@@ -197,11 +198,14 @@ def trainValue(net, epoch=10):
             print(f'epoch: {epoch:3}                  avgLoss: {avgLoss:.2f}   '
                   f'learningRate: {learningRate}')
         # save net
-        torch.save(net.state_dict(), 'valueNet.pt')
+        torch.save(net.state_dict(), outputFileName)
 
 
-# net = PolicyNetwork()
-# trainPolicy(net, 10)
-
-valueNet = ValueNetwork()
-trainValue(valueNet, 10)
+# python3 train.py policyNet
+if len(sys.argv) == 2:
+    if sys.argv[1] == 'policyNet':
+        net = PolicyNetwork()
+        trainPolicy(net, 'policyNet.pt', 8)
+    elif sys.argv[1] == 'valueNet':
+        net = ValueNetwork()
+        trainValue(net, 'valueNet.pt', 8)

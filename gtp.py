@@ -5,8 +5,11 @@ import torch
 import sys
 
 # load net.pt
-net = PlayoutNetwork()
-net.load_state_dict(torch.load('/home/gwd/文档/Resourses/Irene/net.pt'))
+policyNet = PolicyNetwork()
+policyNet.load_state_dict(torch.load('/home/gwd/文档/Resourses/Irene/policyNet.pt'))
+
+valueNet = ValueNetwork()
+valueNet.load_state_dict(torch.load('/home/gwd/文档/Resourses/Irene/valueNet.pt'))
 
 go = Go()
 
@@ -65,11 +68,19 @@ while True:
             else:
                 print('ok')
     elif line.startswith('genmove'):
-        willPlayColor = colorCharToIndex[line.split()[1]]
+        colorChar = line.split()[1]
+        willPlayColor = colorCharToIndex[colorChar]
         features = getAllFeatures(go, willPlayColor)
         features = torch.tensor(features).bool().reshape(1, -1, 19, 19)
-        predict = net(features)[0]
+        predict = policyNet(features)[0]
         predictReverseSortIndex = reversed(torch.argsort(predict))
+
+        # sys err valueNet output
+        value = valueNet(features)[0].item()
+        sys.stderr.write(f'{colorChar} {value}\n')
+
+        with open('/home/gwd/文档/Resourses/Irene/valueOutput.txt', 'a') as f:
+            f.write(f'{colorChar} {value}\n')
 
         for predictIndex in predictReverseSortIndex:
             x, y = toPosition(predictIndex)
@@ -79,7 +90,7 @@ while True:
             y = indexToChar[y]
 
             if moveResult == False:
-                sys.stderr.write(f'Illegal move: {x}{y}\n')
+                sys.stderr.write(f'Illegal move: {y}{x}\n')
             else:
                 print(f'{y}{x}')
                 break

@@ -32,10 +32,7 @@ def prepareSgfFile(fileName):
     valueOutput = []
 
     for move in validSequence:
-        if move[0] == 'b':
-            willPlayColor = 1
-        else:
-            willPlayColor = -1
+        willPlayColor = colorCharToIndex[move[0]]
         x = move[1][0]
         y = move[1][1]
         inputData.append(getAllFeatures(go, willPlayColor))
