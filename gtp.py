@@ -5,7 +5,7 @@ import torch
 import sys
 
 # load net.pt
-net = Net()
+net = PlayoutNetwork()
 net.load_state_dict(torch.load('/home/gwd/文档/Resourses/Irene/net.pt'))
 
 go = Go()

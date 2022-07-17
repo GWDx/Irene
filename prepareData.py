@@ -5,12 +5,17 @@ import matplotlib.pyplot as plt
 from numba import jit
 from features import getAllFeatures
 
+colorCharToIndex = {'B': 1, 'W': -1, 'b': 1, 'w': -1}
+
 
 # @jit
 def prepareSgfFile(fileName):
     with open(fileName, 'rb') as f:
         game = sgf.Sgf_game.from_bytes(f.read())
     sequence = game.get_main_sequence()
+
+    winnerChar = game.get_winner()
+    winner = colorCharToIndex[winnerChar]
 
     validSequence = []
     for node in sequence:
@@ -23,7 +28,8 @@ def prepareSgfFile(fileName):
 
     # append go.board to inputData
     inputData = []
-    outputData = []
+    policyOutput = []
+    valueOutput = []
 
     for move in validSequence:
         if move[0] == 'b':
@@ -33,16 +39,18 @@ def prepareSgfFile(fileName):
         x = move[1][0]
         y = move[1][1]
         inputData.append(getAllFeatures(go, willPlayColor))
-        outputData.append(toDigit(x, y))
+        policyOutput.append(toDigit(x, y))
+        valueOutput.append(winner == willPlayColor)
 
         if go.move(willPlayColor, x, y) == False:
             raise Exception('Invalid move')
 
     # use torch to load data
     inputData = torch.tensor(np.array(inputData)).bool()
-    outputData = torch.tensor(np.array(outputData)).long().reshape(-1)
+    policyOutput = torch.tensor(np.array(policyOutput)).long().reshape(-1)
+    valueOutput = torch.tensor(np.array(valueOutput)).long().reshape(-1)
 
-    return inputData, outputData
+    return inputData, policyOutput, valueOutput
 
 
 def prepareData():
@@ -51,33 +59,38 @@ def prepareData():
         allValidLines = allValidFile.readlines()
 
     allInputData = []
-    allOutputData = []
+    allPolicyOutput = []
+    allValueOutput = []
     fileCount = 2000
 
     for sgfFile in allValidLines[:fileCount]:
         try:
             sgfFile = sgfFile.strip()
-            inputData, outputData = prepareSgfFile(sgfFile)
+            inputData, policyOutput, valueOutput = prepareSgfFile(sgfFile)
             allInputData.append(inputData)
-            allOutputData.append(outputData)
+            allPolicyOutput.append(policyOutput)
+            allValueOutput.append(valueOutput)
 
         except KeyboardInterrupt:
             exit()
-        except Exception:
+        except Exception as e:
+            print(e)
             print('Error: ' + sgfFile)
 
     allInputData = torch.cat(allInputData)
-    allOutputData = torch.cat(allOutputData)
+    allPolicyOutput = torch.cat(allPolicyOutput)
+    allValueOutput = torch.cat(allValueOutput)
 
-    # allInputData, allOutputData = prepareSgfFile('test.sgf')
+    # allInputData, allpolicyOutput = prepareSgfFile('test.sgf')
     # allInputData = allInputData.reshape(-1, 1, 19, 19)
 
     # plt.imshow(allInputData[1][0])
-    # print(toPosition(allOutputData[0]))
-    # print(toPosition(allOutputData[1]))
+    # print(toPosition(allpolicyOutput[0]))
+    # print(toPosition(allpolicyOutput[1]))
     # plt.show()
 
-    torch.save((allInputData, allOutputData), 'data.pt')
+    torch.save((allInputData, allPolicyOutput), 'policyData.pt')
+    torch.save((allInputData, allValueOutput), 'valueData.pt')
 
 
 if __name__ == '__main__':
