@@ -3,33 +3,12 @@ from go import *
 from features import getAllFeatures
 import torch
 import sys
-
-# load net.pt
-policyNet = PolicyNetwork()
-policyNet.load_state_dict(torch.load('/home/gwd/文档/Resourses/Irene/policyNet.pt'))
-
-valueNet = ValueNetwork()
-valueNet.load_state_dict(torch.load('/home/gwd/文档/Resourses/Irene/valueNet.pt'))
+from genMove import *
 
 go = Go()
 
-count = 1
-
 # stderr output 'GTP ready'
 sys.stderr.write('GTP ready\n')
-
-indexToChar = []
-charToIndex = {}
-char = ord('A')
-
-for i in range(19):
-    indexToChar.append(chr(char))
-    charToIndex[chr(char)] = i
-    char += 1
-    if char == ord('I'):
-        char += 1
-
-colorCharToIndex = {'B': 1, 'W': -1, 'b': 1, 'w': -1}
 
 while True:
     # implement GTP (Go Text Protocol)
@@ -70,30 +49,8 @@ while True:
     elif line.startswith('genmove'):
         colorChar = line.split()[1]
         willPlayColor = colorCharToIndex[colorChar]
-        features = getAllFeatures(go, willPlayColor)
-        features = torch.tensor(features).bool().reshape(1, -1, 19, 19)
-        predict = policyNet(features)[0]
-        predictReverseSortIndex = reversed(torch.argsort(predict))
-
-        # sys err valueNet output
-        value = valueNet(features)[0].item()
-        sys.stderr.write(f'{colorChar} {value}\n')
-
-        with open('/home/gwd/文档/Resourses/Irene/valueOutput.txt', 'a') as f:
-            f.write(f'{colorChar} {value}\n')
-
-        for predictIndex in predictReverseSortIndex:
-            x, y = toPosition(predictIndex)
-            moveResult = go.move(willPlayColor, x, y)
-
-            x = 19 - x
-            y = indexToChar[y]
-
-            if moveResult == False:
-                sys.stderr.write(f'Illegal move: {y}{x}\n')
-            else:
-                print(f'{y}{x}')
-                break
+        # genMovePolicy(go, willPlayColor)
+        genMoveMCTS(go, willPlayColor)
 
     elif line.startswith('showboard'):
         for i in range(19):

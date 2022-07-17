@@ -12,6 +12,14 @@ class Go:
         self.previousBoard = np.zeros((size, size), dtype=np.int8)
         self.history = [(None, None)] * 8
 
+    def clone(self):
+        go = Go(self.size)
+        go.board = np.array(self.board)
+        go.liberty = np.array(self.liberty)
+        go.previousBoard = np.array(self.previousBoard)
+        go.history = list(self.history)
+        return go
+
     def move(self, color, x, y):
         # 0. 检查输入是否合法
         if x < 0 or x >= self.size or y < 0 or y >= self.size:
@@ -67,7 +75,7 @@ class Go:
                 return
             if colorBoard[x, y] == 0:
                 if self.board[x, y] == 0:
-                    allLiberityPosition.add((x, y))
+                    allLibertyPosition.add((x, y))
                 return
             visited[x, y] = 1
             boardGroup[x, y] = 1
@@ -83,10 +91,10 @@ class Go:
 
         colorBoard = self.board == color
 
-        allLiberityPosition = set()
+        allLibertyPosition = set()
         dfs(colorBoard, x, y)
 
-        liberties = len(allLiberityPosition)
+        liberties = len(allLibertyPosition)
         # dead group
         if liberties == 0:
             self.board[boardGroup == 1] = 0
