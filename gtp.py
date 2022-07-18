@@ -42,15 +42,17 @@ while True:
 
             color = colorCharToIndex[color]
 
-            if go.move(-1, x, y) == False:
+            if go.move(color, x, y) == False:
                 print('Illegal move')
             else:
                 print('ok')
     elif line.startswith('genmove'):
         colorChar = line.split()[1]
         willPlayColor = colorCharToIndex[colorChar]
-        # genMovePolicy(go, willPlayColor)
-        genMoveMCTS(go, willPlayColor)
+        if len(sys.argv) > 1 and sys.argv[1] == 'MCTS':
+            genMoveMCTS(go, willPlayColor)
+        else:
+            genMovePolicy(go, willPlayColor)
 
     elif line.startswith('showboard'):
         for i in range(19):

@@ -8,7 +8,7 @@ from go import *
 class PolicyNetwork(nn.Module):
     def __init__(self):
         super(PolicyNetwork, self).__init__()
-        self.conv1 = nn.Conv2d(20, 32, 3, padding=1)
+        self.conv1 = nn.Conv2d(15, 32, 3, padding=1)
         self.conv2 = nn.Conv2d(32, 32, 3, padding=1)
         self.conv3 = nn.Conv2d(32, 32, 3, padding=1)
         self.conv4 = nn.Conv2d(32, 32, 3, padding=1)
@@ -35,7 +35,7 @@ class PolicyNetwork(nn.Module):
 class PlayoutNetwork(nn.Module):
     def __init__(self):
         super(PlayoutNetwork, self).__init__()
-        self.conv1 = nn.Conv2d(20, 16, kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(15, 16, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1)
         self.conv3 = nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1)
         self.conv4 = nn.Conv2d(16, 1, kernel_size=3, stride=1, padding=1)
@@ -57,7 +57,7 @@ class PlayoutNetwork(nn.Module):
 class ValueNetwork(nn.Module):
     def __init__(self):
         super(ValueNetwork, self).__init__()
-        self.conv1 = nn.Conv2d(20, 16, kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(15, 16, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1)
         self.conv3 = nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1)
         self.conv4 = nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1)

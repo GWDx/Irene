@@ -1,7 +1,13 @@
+from unittest import result
 from net import *
 from go import *
 import sys
 from features import getAllFeatures
+
+# set random seed
+torch.manual_seed(0)
+torch.cuda.manual_seed_all(0)
+np.random.seed(0)
 
 # load net.pt
 policyNet = PolicyNetwork()
@@ -32,12 +38,12 @@ def genMovePolicy(go, willPlayColor):
 
     features = getAllFeatures(go, willPlayColor)
     features = torch.tensor(features).bool().reshape(1, -1, 19, 19)
-    predict = policyNet(features)[0]
+    predict = playoutNet(features)[0]
     predictReverseSortIndex = reversed(torch.argsort(predict))
 
     # sys err valueNet output
-    value = valueNet(features)[0].item()
-    sys.stderr.write(f'{colorChar} {value}\n')
+    # value = valueNet(features)[0].item()
+    # sys.stderr.write(f'{colorChar} {value}\n')
 
     # with open('/home/gwd/文档/Resourses/Irene/valueOutput.txt', 'a') as f:
     #     f.write(f'{colorChar} {value}\n')
@@ -57,38 +63,52 @@ def genMovePolicy(go, willPlayColor):
 
 
 class MCTSNode:
-    def __init__(self, go, color, parent=None):
-        self.go = go
-        self.color = color
+    def __init__(self, go, willPlayColor, parent):
+        self.go = go.clone()
+        self.color = willPlayColor
         self.parent = parent
         self.children = []
         self.N = 0  # visit count
         self.Q = 0  # win rate
         self.P = 0  # prior probability
         self.expanded = False
+        if parent:
+            self.parent.children.append(self)
 
     def UCB(self):
         if self.N == 0:
-            return float('inf')
+            return float('-inf')
         return self.Q / self.N + np.sqrt(np.log(self.parent.N) / self.N)
 
+    def __str__(self):
+        lastPosition = self.go.history[-1]
+        # result = f'{self.color} {self.N} {self.Q} {self.P}'
+        # node = self
+        # while node.parent:
+        #     result += f' {self.parent.N}'
+        #     node = node.parent
+        result = f'{self.color} {self.N} {self.Q} {self.P} {self.UCB()} {lastPosition}'
+        return result
 
-def getPlayoutResult(go, color):
-    inputData = getAllFeatures(go, color)
+
+def getPlayoutResult(go, willPlayColor):
+    inputData = getAllFeatures(go, willPlayColor)
     inputData = torch.tensor(inputData).bool().reshape(1, -1, 19, 19)
     predict = playoutNet(inputData)[0]
     return predict
 
 
-def getValueResult(go, color):
-    inputData = getAllFeatures(go, color)
+def getValueResult(go, willPlayColor):
+    inputData = getAllFeatures(go, willPlayColor)
     inputData = torch.tensor(inputData).bool().reshape(1, -1, 19, 19)
     predict = valueNet(inputData)[0].item()
     return predict
 
 
 # 选取 UCB 最大的节点
-def bestChild(node):
+def getBestChild(node):
+    # print([i.UCB() for i in node.children])
+    # print([i.N for i in node.children])
     bestChild = None
     bestUCB = float('-inf')
     for child in node.children:
@@ -96,106 +116,149 @@ def bestChild(node):
         if ucb > bestUCB:
             bestChild = child
             bestUCB = ucb
+    # if debug:
+    #     print(f'bestChild: {bestChild} bestUCB: {bestUCB}')
     return bestChild
 
 
-# 扩展一次
-def expandOne(go, node, color):
-    predict = defaultPolicy(go, node, color)
-
-    while True:
-        moveIndex = np.random.choice(19 * 19, p=predict.numpy())
-        x, y = toPosition(moveIndex)
-        newGo = go.clone()
-
-        if newGo.move(color, x, y):
-            return MCTSNode(newGo, -color, node)
+def getMostVisitedChild(node):
+    bestChild = None
+    bestN = 0
+    for child in node.children:
+        if child.N > bestN:
+            bestChild = child
+            bestN = child.N
+    return bestChild
 
 
 # 随机操作后创建新的节点，返回最终节点的 value
-def defaultPolicy(go, parent, color):
-    newGo = go.clone()
-    currentColor = color
+def defaultPolicy(expandNode):
+    newGo = expandNode.go.clone()
+    willPlayColor = expandNode.color
+
     for i in range(10):
-        predict = getPlayoutResult(newGo, currentColor)
-        x, y = toPosition(torch.argmax(predict))
-        newGo.move(currentColor, x, y)  # TODO
-        currentColor = -currentColor
+        predict = getPlayoutResult(newGo, willPlayColor)
 
-    return predict
+        while True:
+            # random choose a move
+            selectedIndex = np.random.choice(len(predict), p=predict.exp().detach().numpy())
+            x, y = toPosition(selectedIndex)
+            if newGo.move(willPlayColor, x, y):
+                break
+
+        willPlayColor = -willPlayColor
+
+    value = getValueResult(newGo, willPlayColor)
+
+    if debug:
+        print(f'expandNode: {expandNode} value: {value}')
+
+    return value
 
 
-# 传入当前开始搜索的节点，返回创建的新的节点
-# 先找当前未选择过的子节点，如果有多个则随机选。如果都选择过就找 UCB 最大的节点
-def treePolicy(go, color):
-    node = MCTSNode(go, color)
+def searchChildren(root):
+    go = root.go
+    nodeWillPlayColor = root.color
 
-    predict = getPlayoutResult(go, color)
+    predict = getPlayoutResult(go, nodeWillPlayColor)
     predictReverseSortIndex = reversed(torch.argsort(predict))
+
     count = 0
+    nextColor = -nodeWillPlayColor
 
     for predictIndex in predictReverseSortIndex:
         x, y = toPosition(predictIndex)
         newGo = go.clone()
 
-        if newGo.move(color, x, y):
-            newNode = MCTSNode(newGo, -color, node)
-            node.children.append(newNode)
+        if newGo.move(nodeWillPlayColor, x, y):
+            newNode = MCTSNode(newGo, nextColor, root)
             count += 1
-            if count == 5:
+            if count == 3:
                 break
-    node.expanded = True
+    # node.expanded = True
 
+
+# 传入当前开始搜索的节点，返回创建的新的节点
+# 先找当前未选择过的子节点，如果有多个则随机选。如果都选择过就找 UCB 最大的节点
+def treePolicy(root):
     allExpanded = True
-    for child in node.children:
+    for child in root.children:
         if not child.expanded:
             allExpanded = False
             break
 
     if allExpanded:
-        return bestChild(node)
+        return getBestChild(root)
     else:
-        return node
+        return child
 
 
 def backward(node, value):
     while node:
         node.N += 1
         node.Q += value
+        node.expanded = True
         node = node.parent
 
 
-def MCTS(node):
+def MCTS(root):
     for i in range(100):
-        expandNode = treePolicy(node.go, node.color)
-        value = defaultPolicy(expandNode.go, expandNode, expandNode.color)
+        expandNode = treePolicy(root)
+        value = defaultPolicy(expandNode)
         backward(expandNode, value)
+        # print(expandNode)
 
-    bestNextNode = bestChild(node)
+    bestNextNode = getMostVisitedChild(root)
     return bestNextNode
 
 
 def genMoveMCTS(go, willPlayColor):
-    node = MCTSNode(go, willPlayColor)
-    bestNextNode = MCTS(node)
+    root = MCTSNode(go, willPlayColor, None)
+
+    searchChildren(root)
+    bestNextNode = MCTS(root)
     bestMove = bestNextNode.go.history[-1]
 
-    x, y = toPosition(bestMove)
-    moveResult = bestNextNode.go.move(willPlayColor, x, y)
+    if debug:
+        playoutResult = getPlayoutResult(go, willPlayColor)
+        playoutMove = toPosition(torch.argmax(playoutResult))
+        print(playoutMove, bestMove, playoutMove == bestMove)
+        for child in root.children:
+            print(child)
+
+    x, y = bestMove
+    moveResult = go.move(willPlayColor, x, y)
 
     x = 19 - x
     y = indexToChar[y]
 
     if moveResult == False:
         sys.stderr.write(f'Illegal move: {y}{x}\n')
+        exit(1)
     else:
         print(f'{y}{x}')
+    return x, y
 
+
+debug = False
 
 if __name__ == '__main__':
     # 初始化棋盘
     go = Go()
 
-    # MCTS
+    # willPlayColor = 1
+    # for i in range(8):
+    #     genMoveMCTS(go, willPlayColor)
+    #     willPlayColor = -willPlayColor
+    # debug = True
+    # genMoveMCTS(go, willPlayColor)
+
     willPlayColor = 1
+
+    go.move(1, 3, 16)
+    go.move(-1, 3, 3)
+    go.move(1, 16, 16)
+    go.move(-1, 16, 3)
+
+    debug = True
     genMoveMCTS(go, willPlayColor)

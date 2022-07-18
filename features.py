@@ -35,11 +35,11 @@ def libertiesFeatures(liberty, length=8):
     return features
 
 
-def recentOnehotFeatures(history, length=8):
+def recentOnehotFeatures(history, length=3):
     features = []
     for item in history[-length:]:
         onehot = np.zeros((19, 19), dtype=np.int8)
-        if item is not (None, None):
+        if item != (None, None):
             x, y = item
             onehot[x, y] = 1
         features.append(onehot)
