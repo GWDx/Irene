@@ -1,9 +1,8 @@
 from sgfmill import sgf
 from go import *
 import torch
-import matplotlib.pyplot as plt
-from numba import jit
 from features import getAllFeatures
+# import matplotlib.pyplot as plt
 
 colorCharToIndex = {'B': 1, 'W': -1, 'b': 1, 'w': -1}
 

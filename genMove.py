@@ -1,4 +1,3 @@
-from unittest import result
 from net import *
 from go import *
 import sys
@@ -58,8 +57,8 @@ def getPlayoutResult(go, willPlayColor):
 
 def getValueResult(go, willPlayColor):
     # TODO
-    inputData = getAllFeatures(go, willPlayColor)
-    inputData = torch.tensor(inputData).bool().reshape(1, -1, 19, 19)
+    # inputData = getAllFeatures(go, willPlayColor)
+    # inputData = torch.tensor(inputData).bool().reshape(1, -1, 19, 19)
     # predict = valueNet(inputData)[0].item()
     # return predict
 

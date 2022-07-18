@@ -4,9 +4,7 @@
 # Liberties               8 Number of liberties
 # Zeros                   1 Constant plane
 
-from pyexpat import features
 import numpy as np
-from go import Go
 
 
 def colorStoneFeatures(board, willPlayColor):

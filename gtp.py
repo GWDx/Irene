@@ -1,7 +1,5 @@
 from net import *
 from go import *
-from features import getAllFeatures
-import torch
 import sys
 from genMove import *
 
