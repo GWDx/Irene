@@ -1,4 +1,3 @@
-from sgfmill import sgf
 from go import *
 from prepareData import *
 from net import *
@@ -159,6 +158,9 @@ def trainValue(net, outputFileName, epoch=10):
 
             # forward
             output = net(inputDataBatch)
+            outputInt = torch.round(output)
+            correctCount = torch.sum(outputInt == outputDataBatch).item()
+            totalCorrectCount += correctCount
 
             # backward
             loss = loss_function(output, outputDataBatch.float())
@@ -171,8 +173,8 @@ def trainValue(net, outputFileName, epoch=10):
             # print
             if i % logInterval == 0 and i != 0:
                 avgLoss = totalLoss / logInterval
-                # print('epoch:', epoch, 'batch:', i:5, 'correctRate:', correctRate, 'avgLoss:', avgLoss)
-                print(f'epoch: {epoch:3}   batch: {i:>5}   avgLoss: {avgLoss:.2f}')
+                correctRate = totalCorrectCount / (logInterval * batchSize)
+                print(f'epoch: {epoch:3}   batch: {i:>5}   correctRate: {correctRate:.2%}   avgLoss: {avgLoss:.2f}')
                 totalCorrectCount = 0
                 totalLoss = 0
 
@@ -188,6 +190,9 @@ def trainValue(net, outputFileName, epoch=10):
                 testOutputDataBatch = testOutputDataBatch.to(device)
 
                 output = net(testInputDataBatch)
+                outputInt = torch.round(output)
+                correctCount = torch.sum(outputInt == testOutputDataBatch).item()
+                totalCorrectCount += correctCount
 
                 loss = loss_function(output, testOutputDataBatch)
                 totalLoss += loss.item()
@@ -195,7 +200,7 @@ def trainValue(net, outputFileName, epoch=10):
             correctRate = totalCorrectCount / len(testInputData)
             avgLoss = totalLoss / testBatchCount
             learningRate = optimizer.param_groups[0]['lr']
-            print(f'epoch: {epoch:3}                  avgLoss: {avgLoss:.2f}   '
+            print(f'epoch: {epoch:3}                  correctRate: {correctRate:>2.2%}   avgLoss: {avgLoss:.2f}   '
                   f'learningRate: {learningRate}')
         # save net
         torch.save(net.state_dict(), outputFileName)
@@ -213,5 +218,5 @@ if len(sys.argv) == 2:
         net = ValueNetwork()
         trainValue(net, 'valueNet.pt', 8)
 else:
-    net = PolicyNetwork()
-    trainPolicy(net, 'policyNet.pt', 8)
+    net = ValueNetwork()
+    trainValue(net, 'valueNet.pt', 8)
