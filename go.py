@@ -109,6 +109,8 @@ def toDigit(x, y):
 def toPosition(digit):
     if isinstance(digit, torch.Tensor):
         digit = digit.item()
+    if digit == 361:
+        return None, None
     x = digit // 19
     y = digit % 19
     return x, y

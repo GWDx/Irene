@@ -42,6 +42,11 @@ def prepareSgfFile(fileName):
         if go.move(willPlayColor, x, y) == False:
             raise Exception('Invalid move')
 
+    willPlayColor = -willPlayColor
+    inputData.append(getAllFeatures(go, willPlayColor))
+    policyOutput.append(19 * 19)  # pass
+    valueOutput.append(winner == willPlayColor)
+
     # use torch to load data
     inputData = torch.tensor(np.array(inputData)).bool()
     policyOutput = torch.tensor(np.array(policyOutput)).long().reshape(-1)

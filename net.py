@@ -13,7 +13,7 @@ class PolicyNetwork(nn.Module):
         self.conv3 = nn.Conv2d(32, 32, 3, padding=1)
         self.conv4 = nn.Conv2d(32, 32, 3, padding=1)
         self.conv5 = nn.Conv2d(32, 1, 3, padding=1)
-        self.linear = nn.Linear(19 * 19, 19 * 19)
+        self.linear = nn.Linear(19 * 19, 19 * 19 + 1)
 
     def forward(self, x):
         blank = x[:, 0]
@@ -26,7 +26,7 @@ class PolicyNetwork(nn.Module):
         x = x.view(-1, 19 * 19)
         x = self.linear(x)
         assert x.max() > 1e-25
-        x = x * blank.view(-1, 19 * 19) + 1e-30
+        x = torch.cat((x[:, :-1] * blank.view(-1, 19 * 19), x[:, -1:]), dim=1)
         x = F.log_softmax(x, dim=1)
         return x
 
@@ -39,6 +39,7 @@ class PlayoutNetwork(nn.Module):
         self.conv2 = nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1)
         self.conv3 = nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1)
         self.conv4 = nn.Conv2d(16, 1, kernel_size=3, stride=1, padding=1)
+        self.linear = nn.Linear(19 * 19, 19 * 19 + 1)
 
     def forward(self, x):
         blank = x[:, 0]
@@ -48,7 +49,8 @@ class PlayoutNetwork(nn.Module):
         x = F.relu(self.conv3(x))
         x = self.conv4(x)
         x = x.view(-1, 19 * 19)
-        x = x * blank.view(-1, 19 * 19) + 1e-30
+        x = self.linear(x)
+        x = torch.cat((x[:, :-1] * blank.view(-1, 19 * 19), x[:, -1:]), dim=1)
         x = F.log_softmax(x, dim=1)
         return x
 

@@ -205,10 +205,13 @@ def trainValue(net, outputFileName, epoch=10):
 if len(sys.argv) == 2:
     if sys.argv[1] == 'policyNet':
         net = PolicyNetwork()
-        trainPolicy(net, 'policyNet.pt', 8)
+        trainPolicy(net, 'policyNet.pt', 5)
     elif sys.argv[1] == 'playoutNet':
         net = PlayoutNetwork()
-        trainPolicy(net, 'playoutNet.pt', 8)
+        trainPolicy(net, 'playoutNet.pt', 5)
     elif sys.argv[1] == 'valueNet':
         net = ValueNetwork()
         trainValue(net, 'valueNet.pt', 8)
+else:
+    net = PolicyNetwork()
+    trainPolicy(net, 'policyNet.pt', 8)
