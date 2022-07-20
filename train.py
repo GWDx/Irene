@@ -14,6 +14,23 @@ torch.cuda.manual_seed_all(0)
 np.random.seed(0)
 
 
+def splitData(inputData, outputData, ratio):
+    length = len(inputData)
+    trainLength = int(length * ratio)
+    trainInputData, testInputData = inputData[:trainLength], inputData[trainLength:]
+    trainOutputData, testOutputData = outputData[:trainLength], outputData[trainLength:]
+
+    trainPermutation = torch.randperm(len(trainInputData))
+    trainInputData = trainInputData[trainPermutation]
+    trainOutputData = trainOutputData[trainPermutation]
+
+    testPermutation = torch.randperm(len(testInputData))
+    testInputData = testInputData[testPermutation]
+    testOutputData = testOutputData[testPermutation]
+
+    return trainInputData, trainOutputData, testInputData, testOutputData
+
+
 def trainPolicy(net, outputFileName, epoch=10):
     optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.5)
@@ -21,24 +38,14 @@ def trainPolicy(net, outputFileName, epoch=10):
 
     inputData, outputData = torch.load('policyData.pt')
 
-    # randomize data
-    permutation = torch.randperm(inputData.shape[0])
-    inputData = inputData[permutation]
-    outputData = outputData[permutation]
-
-    length = len(inputData)
-    trainLength = int(length * 0.8)
-    trainInputData, testInputData = inputData[:trainLength], inputData[trainLength:]
-    trainOutputData, testOutputData = outputData[:trainLength], outputData[trainLength:]
-
-    # trainInputData, trainOutputData = inputData, outputData
+    trainInputData, trainOutputData, testInputData, testOutputData = splitData(inputData, outputData, 0.8)
 
     # use cuda to train
     net.to(device)
 
     # batch size = 10
     batchSize = 100
-    batchCount = int(len(trainInputData) / batchSize)
+    trainBatchCount = int(len(trainInputData) / batchSize)
 
     logInterval = 100
 
@@ -50,7 +57,7 @@ def trainPolicy(net, outputFileName, epoch=10):
         totalLoss = 0
         totalCorrectCount = 0
 
-        for i in range(batchCount):
+        for i in range(trainBatchCount):
             # get batch data
             inputDataBatch = trainInputData[i * batchSize:(i + 1) * batchSize]
             outputDataBatch = trainOutputData[i * batchSize:(i + 1) * batchSize].reshape(-1)
@@ -72,18 +79,17 @@ def trainPolicy(net, outputFileName, epoch=10):
 
             totalLoss += loss.item()
 
-            # print(loss.item())
-            # print(correctCount)
-            # print
             if i % logInterval == 0 and i != 0:
                 correctRate = totalCorrectCount / (logInterval * batchSize)
                 avgLoss = totalLoss / logInterval
-                # print('epoch:', epoch, 'batch:', i:5, 'correctRate:', correctRate, 'avgLoss:', avgLoss)
                 print(f'epoch: {epoch:3}   batch: {i:>5}   correctRate: {correctRate:.2%}   avgLoss: {avgLoss:.2f}')
                 totalCorrectCount = 0
                 totalLoss = 0
 
         scheduler.step()
+
+        totalCorrectCount = 0
+        totalLoss = 0
 
         # test
         with torch.no_grad():
@@ -102,7 +108,7 @@ def trainPolicy(net, outputFileName, epoch=10):
                 totalLoss += loss.item()
 
             correctRate = totalCorrectCount / len(testInputData)
-            avgLoss = totalLoss / testBatchCount
+            avgLoss = totalLoss / len(testInputData) * batchSize
             learningRate = optimizer.param_groups[0]['lr']
             print(f'epoch: {epoch:3}                  correctRate: {correctRate:>2.2%}   avgLoss: {avgLoss:.2f}   '
                   f'learningRate: {learningRate}')
@@ -118,17 +124,11 @@ def trainValue(net, outputFileName, epoch=10):
 
     inputData, outputData = torch.load('valueData.pt')
 
-    # randomize data
-    permutation = torch.randperm(inputData.shape[0])
-    inputData = inputData[permutation]
-    outputData = outputData[permutation]
+    # selectInterval = 5
+    # inputData = inputData[::selectInterval]
+    # outputData = outputData[::selectInterval]
 
-    length = len(inputData)
-    trainLength = int(length * 0.8)
-    trainInputData, testInputData = inputData[:trainLength], inputData[trainLength:]
-    trainOutputData, testOutputData = outputData[:trainLength], outputData[trainLength:]
-
-    # trainInputData, trainOutputData = inputData, outputData
+    trainInputData, trainOutputData, testInputData, testOutputData = splitData(inputData, outputData, 0.8)
 
     # use cuda to train
     net.to(device)
@@ -180,6 +180,9 @@ def trainValue(net, outputFileName, epoch=10):
 
         scheduler.step()
 
+        totalCorrectCount = 0
+        totalLoss = 0
+
         # test
         with torch.no_grad():
             for i in range(testBatchCount):
@@ -198,7 +201,7 @@ def trainValue(net, outputFileName, epoch=10):
                 totalLoss += loss.item()
 
             correctRate = totalCorrectCount / len(testInputData)
-            avgLoss = totalLoss / testBatchCount
+            avgLoss = totalLoss / len(testInputData) * batchSize
             learningRate = optimizer.param_groups[0]['lr']
             print(f'epoch: {epoch:3}                  correctRate: {correctRate:>2.2%}   avgLoss: {avgLoss:.2f}   '
                   f'learningRate: {learningRate}')
