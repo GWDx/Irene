@@ -26,7 +26,7 @@ AlphaGo 使用的是更多层卷积（包含残差网络）、更多 features，
 | net.py         | 策略网络、价值网络的结构                                     |
 | train.py       | 训练网络                                                     |
 | genMove.py     | 使用训练的网络生成输出（直接使用策略网络，或者用 MCTS 搜索） |
-| gtp.py         | 以 GTP 协议从命令行传输数据                                  |
+| gtp.py         | 以 GTP 协议从命令行传输落子位置等信息                        |
 
 ### 使用方式
 
@@ -89,9 +89,9 @@ python gtp.py
 + [Mastering the game of Go with deep neural networks and tree search](https://www.nature.com/articles/nature16961)
 + [Mugo GitHub](https://github.com/brilee/MuGo)
 + [ml_implementation MCTS GitHub](https://github.com/tobegit3hub/ml_implementation/blob/master/monte_carlo_tree_search/mcst_example.py)
-+ [28 天自制你的 AlphaGo 知乎](https://zhuanlan.zhihu.com/p/24885190)
 
 ### 感谢
 
 + [Sabaki](https://github.com/SabakiHQ/Sabaki)
 + [sgfmill](https://github.com/mattheww/sgfmill)
++ [28 天自制你的 AlphaGo 知乎](https://zhuanlan.zhihu.com/p/24885190)
