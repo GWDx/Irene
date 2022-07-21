@@ -28,6 +28,7 @@ def splitData(inputData, outputData, ratio):
     testInputData = testInputData[testPermutation]
     testOutputData = testOutputData[testPermutation]
 
+    del inputData, outputData
     return trainInputData, trainOutputData, testInputData, testOutputData
 
 

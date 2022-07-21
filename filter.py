@@ -8,7 +8,7 @@ allValidFile = []
 count = 0
 
 for line in allLines:
-    sgfFile = line.strip()
+    sgfFile = 'jgdb/' + line.strip()
     try:
         with open(sgfFile, 'r') as sgf:
             data = sgf.read()

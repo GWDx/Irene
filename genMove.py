@@ -10,13 +10,13 @@ np.random.seed(0)
 
 # load net.pt
 policyNet = PolicyNetwork()
-policyNet.load_state_dict(torch.load('/home/gwd/文档/Resourses/Irene/policyNet.pt'))
+policyNet.load_state_dict(torch.load('policyNet.pt'))
 
 playoutNet = PlayoutNetwork()
-playoutNet.load_state_dict(torch.load('/home/gwd/文档/Resourses/Irene/playoutNet.pt'))
+playoutNet.load_state_dict(torch.load('playoutNet.pt'))
 
 valueNet = ValueNetwork()
-valueNet.load_state_dict(torch.load('/home/gwd/文档/Resourses/Irene/valueNet.pt'))
+valueNet.load_state_dict(torch.load('valueNet.pt'))
 
 colorCharToIndex = {'B': 1, 'W': -1, 'b': 1, 'w': -1}
 indexToColorChar = {1: 'B', -1: 'W'}
@@ -41,27 +41,28 @@ def toStrPosition(x, y):
     return f'{y}{x}'
 
 
-def getPolicyResult(go, willPlayColor):
+def getPolicyNetResult(go, willPlayColor):
     inputData = getAllFeatures(go, willPlayColor)
     inputData = torch.tensor(inputData).bool().reshape(1, -1, 19, 19)
     predict = policyNet(inputData)[0]
     return predict
 
 
-def getPlayoutResult(go, willPlayColor):
+def getPlayoutNetResult(go, willPlayColor):
     inputData = getAllFeatures(go, willPlayColor)
     inputData = torch.tensor(inputData).bool().reshape(1, -1, 19, 19)
     predict = playoutNet(inputData)[0]
     return predict
 
 
-def getValueResult(go, willPlayColor):
-    # TODO
-    # inputData = getAllFeatures(go, willPlayColor)
-    # inputData = torch.tensor(inputData).bool().reshape(1, -1, 19, 19)
-    # predict = valueNet(inputData)[0].item()
-    # return predict
+def getValueNetResult(go, willPlayColor):
+    inputData = getAllFeatures(go, willPlayColor)
+    inputData = torch.tensor(inputData).bool().reshape(1, -1, 19, 19)
+    value = valueNet(inputData)[0].item()
+    return value
 
+
+def getValueResult(go, willPlayColor):
     # predict = playoutNet(inputData)[0, 361]
     # return 1 - predict.item()
 
@@ -71,14 +72,14 @@ def getValueResult(go, willPlayColor):
 
 
 def genMovePolicy(go, willPlayColor):
-    predict = getPolicyResult(go, willPlayColor)
+    predict = getPolicyNetResult(go, willPlayColor)
     predictReverseSortIndex = reversed(torch.argsort(predict))
 
     # sys err valueNet output
-    # value = valueNet(features)[0].item()
-    # sys.stderr.write(f'{colorChar} {value}\n')
+    value = getValueNetResult(go, willPlayColor)
+    sys.stderr.write(f'{willPlayColor} {value}\n')
 
-    # with open('/home/gwd/文档/Resourses/Irene/valueOutput.txt', 'a') as f:
+    # with open('valueOutput.txt', 'a') as f:
     #     f.write(f'{colorChar} {value}\n')
 
     for predictIndex in predictReverseSortIndex:
@@ -152,7 +153,7 @@ def defaultPolicy(expandNode, rootColor):
     willPlayColor = expandNode.color
 
     for i in range(5):
-        predict = getPlayoutResult(newGo, willPlayColor)
+        predict = getPlayoutNetResult(newGo, willPlayColor)
 
         while True:
             # random choose a move
@@ -165,7 +166,7 @@ def defaultPolicy(expandNode, rootColor):
 
         willPlayColor = -willPlayColor
 
-    value = getValueResult(newGo, rootColor)
+    value = getValueNetResult(newGo, rootColor)
 
     if debug:
         print(f'expandNode: {expandNode} value: {value}')
@@ -177,7 +178,7 @@ def searchChildren(node):
     go = node.go
     nodeWillPlayColor = node.color
 
-    predict = getPolicyResult(go, nodeWillPlayColor)
+    predict = getPolicyNetResult(go, nodeWillPlayColor)
     predictReverseSortIndex = reversed(torch.argsort(predict))
 
     count = 0
@@ -250,7 +251,7 @@ def genMoveMCTS(go, willPlayColor):
     bestMove = bestNextNode.go.history[-1]
 
     if debug:
-        playoutResult = getPlayoutResult(go, willPlayColor)
+        playoutResult = getPlayoutNetResult(go, willPlayColor)
         playoutMove = toPosition(torch.argmax(playoutResult))
         print(playoutMove, bestMove, playoutMove == bestMove)
         for child in root.children:

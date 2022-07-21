@@ -15,7 +15,6 @@ class PolicyNetwork(nn.Module):
         self.conv4 = nn.Conv2d(32, 32, 3, padding=1)
         # self.convDrop2 = nn.Dropout2d(0.3)
         self.conv5 = nn.Conv2d(32, 1, 3, padding=1)
-        self.linear = nn.Linear(19 * 19, 19 * 19 + 1)
 
     def forward(self, x):
         blank = x[:, 0]
@@ -28,9 +27,7 @@ class PolicyNetwork(nn.Module):
         # x = self.convDrop2(x)
         x = self.conv5(x)
         x = x.view(-1, 19 * 19)
-        # x = self.linear(x)
-        # assert x.max() > 1e-25
-        x = torch.cat((x * blank.view(-1, 19 * 19), torch.ones((len(x), 1)).to("cuda") * 1e-50), dim=1)
+        x = torch.cat((x * blank.view(-1, 19 * 19), torch.ones((len(x), 1)).to(x.device) * 1e-50), dim=1)
         x = F.log_softmax(x, dim=1)
         return x
 
