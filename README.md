@@ -30,6 +30,13 @@ AlphaGo 使用的是更多层卷积（包含残差网络）、更多 features，
 
 ### 使用方式
 
+下载代码
+
+```
+git clone https://github.com/GWDx/Irene.git
+cd Irene
+```
+
 安装依赖
 
 ```bash

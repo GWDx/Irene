@@ -76,7 +76,7 @@ def genMovePolicy(go, willPlayColor):
     predictReverseSortIndex = reversed(torch.argsort(predict))
 
     # sys err valueNet output
-    value = getValueNetResult(go, willPlayColor)
+    value = getValueResult(go, willPlayColor)
     sys.stderr.write(f'{willPlayColor} {value}\n')
 
     # with open('valueOutput.txt', 'a') as f:
