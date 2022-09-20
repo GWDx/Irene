@@ -140,9 +140,8 @@ def prepareValueData(fileCount):
     assert allValueInputData.shape[0] == allValueOutput.shape[0]
 
     torch.save((allValueInputData, allValueOutput), 'valueData.pt')
-    pass
 
 
 if __name__ == '__main__':
-    # preparePolicyData(2000)
-    prepareValueData(200000)
+    preparePolicyData(2000)
+    # prepareValueData(20000)
