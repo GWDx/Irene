@@ -88,7 +88,7 @@ def prepareValueSgfFile(fileName):
 
 
 def preparePolicyData(fileCount):
-    with open('jgdb/allValid.txt', 'r') as allValidFile:
+    with open('games/allValid.txt', 'r') as allValidFile:
         allValidLines = allValidFile.readlines()
 
     allInputData = []
@@ -107,12 +107,15 @@ def preparePolicyData(fileCount):
             print(e)
             print('Error: ' + sgfFile)
 
-    allInputData = torch.cat(allInputData)
-    allPolicyOutput = torch.cat(allPolicyOutput)
+    ansInputData = torch.cat(allInputData)
+    ansPolicyOutput = torch.cat(allPolicyOutput)
 
-    assert allInputData.shape[0] == allPolicyOutput.shape[0]
+    del allInputData
+    del allPolicyOutput
 
-    torch.save((allInputData, allPolicyOutput), 'policyData.pt')
+    assert ansInputData.shape[0] == ansPolicyOutput.shape[0]
+
+    torch.save((ansInputData, ansPolicyOutput), 'policyData.pt')
 
 
 def prepareValueData(fileCount):
@@ -143,5 +146,5 @@ def prepareValueData(fileCount):
 
 
 if __name__ == '__main__':
-    preparePolicyData(2000)
+    preparePolicyData(3000)
     # prepareValueData(20000)

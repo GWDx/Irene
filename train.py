@@ -8,10 +8,16 @@ device = torch.device('cpu')
 if torch.cuda.is_available():
     device = torch.device('cuda')
 
+
 # set random seed
-torch.manual_seed(0)
-torch.cuda.manual_seed_all(0)
-np.random.seed(0)
+def setRandomSeed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+
+
+setRandomSeed(0)
 
 
 def splitData(inputData, outputData, ratio):
@@ -33,9 +39,10 @@ def splitData(inputData, outputData, ratio):
 
 
 def trainPolicy(net, outputFileName, epoch=10):
-    optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.5)
-    loss_function = nn.NLLLoss()
+    # optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
+    optimizer = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
+    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.5)
+    loss_function = nn.CrossEntropyLoss()
 
     inputData, outputData = torch.load('policyData.pt')
 
@@ -48,7 +55,7 @@ def trainPolicy(net, outputFileName, epoch=10):
     batchSize = 100
     trainBatchCount = int(len(trainInputData) / batchSize)
 
-    logInterval = 100
+    logInterval = 1000
 
     testBatchCount = int(len(testInputData) / batchSize)
     totalLoss = 0
@@ -87,7 +94,7 @@ def trainPolicy(net, outputFileName, epoch=10):
                 totalCorrectCount = 0
                 totalLoss = 0
 
-        scheduler.step()
+        # scheduler.step()
 
         totalCorrectCount = 0
         totalLoss = 0
@@ -138,7 +145,7 @@ def trainValue(net, outputFileName, epoch=10):
     batchSize = 100
     batchCount = int(len(trainInputData) / batchSize)
 
-    logInterval = 100
+    logInterval = 1000
 
     testBatchCount = int(len(testInputData) / batchSize)
     totalLoss = 0
@@ -214,7 +221,7 @@ def trainValue(net, outputFileName, epoch=10):
 if len(sys.argv) == 2:
     if sys.argv[1] == 'policyNet':
         net = PolicyNetwork()
-        trainPolicy(net, 'policyNet.pt', 10)
+        trainPolicy(net, 'policyNet.pt', 40)
     elif sys.argv[1] == 'playoutNet':
         net = PlayoutNetwork()
         trainPolicy(net, 'playoutNet.pt', 5)
@@ -222,5 +229,5 @@ if len(sys.argv) == 2:
         net = ValueNetwork()
         trainValue(net, 'valueNet.pt', 8)
 else:
-    net = ValueNetwork()
-    trainValue(net, 'valueNet.pt', 8)
+    net = PolicyNetwork()
+    trainValue(net, 'policyNet.pt', 8)
