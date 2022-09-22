@@ -1,13 +1,14 @@
 ## Irene
 
 > 名称来源于 [Portrait of Irène Cahen d'Anvers](https://en.wikipedia.org/wiki/Portrait_of_Irène_Cahen_d'Anvers)
->
 
-围棋 AI，仿照 Alphago，实现了简单的**策略网络**、**价值网络**和**蒙特卡洛搜索**
+围棋 AI，仿照 Alphago，主要实现了简单的**策略网络**和**蒙特卡洛树搜索算法**
 
-+ 策略网络输入是 features，输出是各个位置或 pass 的概率（对数）。使用 5 层卷积
+> Alphago 主要使用了卷积网络（策略网络、价值网络）和蒙特卡洛树搜索算法、强化学习等技术。
+
++ 策略网络输入是 features，输出是各个位置或 pass 的概率（对数）。使用卷积网络
 + 价值网络输入 features，输出胜率。也用到了卷积网络
-+ 蒙特卡洛搜索（MCTS）在策略网络输出的排名前几的选点中选择合适的
++ 蒙特卡洛树搜索算法（MCTS）从策略网络输出的排名靠前的选点中选择合适的
 
 > 其中 features 包括棋的位置、各个位置气的数量、最近的移动记录等信息。
 
@@ -32,7 +33,7 @@ AlphaGo 使用的是更多层卷积（包含残差网络）、更多 features，
 
 下载代码
 
-```
+```bash
 git clone https://github.com/GWDx/Irene.git
 cd Irene
 ```
@@ -46,8 +47,8 @@ pip install torch numpy sgfmill
 获取并处理数据
 
 ```bash
-wget https://pjreddie.com/media/files/jgdb.tar.gz
-tar xvf jgdb.tar.gz
+wget https://homepages.cwi.nl/~aeb/go/games/games.7z
+tar xvf games.7z
 ```
 
 ```bash
@@ -73,16 +74,24 @@ python gtp.py
 
 ### 结果
 
-策略网络训练的正确率接近达到 35%。
-直接训练价值网络过拟合严重。每隔一段距离选取数据可以缓解这个问题。
++ 策略网络训练的正确率达到 38%。
++ 对于价值网络，直接训练过拟合严重，AlphaGo 的论文中也提到了这个问题。这是他们使用了强化学习的一个原因。
 
-仅使用策略网络的 AI 会走一些定式。计算上会出问题，算不清征子
+<center><img src="image/1.png" alt="1" width=60% /></center>
+<center>策略网络（AI 执白）与人对弈的局面</center>
 
-<img src="image/1.png" alt="1" width=60% />
++ 左上和左下都是合乎定式的下法（角上双方互不吃亏的下法），这是从棋谱中学到的
++ 但计算力较弱，没有计算出右上角的征子
+
+<center><img src="image/2.png" alt="2" width=60% /></center>
+<center>MCTS（执白）与策略网络（执黑）对弈的结果，白棋胜</center>
 
 使用策略网络，并结合以棋子数为评估指标的 MCTS 搜索时，AI 倾向于吃子，计算力有所提高。但围棋更重要的是围空，吃子有时并不利于围空。
 
-<img src="image/2.png" alt="2" width=60% />
+### TODO
+
+- [ ] 改进策略网络，考虑使用残差网络、数据增强等方法
+- [ ] 使用强化学习训练价值网络
 
 ### 参考
 
