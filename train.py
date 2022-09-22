@@ -34,14 +34,14 @@ def splitData(inputData, outputData, ratio):
     testInputData = testInputData[testPermutation]
     testOutputData = testOutputData[testPermutation]
 
-    del inputData, outputData
+    del inputData, outputData, trainPermutation, testPermutation
     return trainInputData, trainOutputData, testInputData, testOutputData
 
 
 def trainPolicy(net, outputFileName, epoch=10):
     # optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
     optimizer = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
-    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.1)
     loss_function = nn.CrossEntropyLoss()
 
     inputData, outputData = torch.load('policyData.pt')
@@ -94,7 +94,7 @@ def trainPolicy(net, outputFileName, epoch=10):
                 totalCorrectCount = 0
                 totalLoss = 0
 
-        # scheduler.step()
+        scheduler.step()
 
         totalCorrectCount = 0
         totalLoss = 0

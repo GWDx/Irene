@@ -146,5 +146,5 @@ def prepareValueData(fileCount):
 
 
 if __name__ == '__main__':
-    preparePolicyData(3000)
+    preparePolicyData(2000)
     # prepareValueData(20000)
