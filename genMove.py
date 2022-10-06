@@ -1,6 +1,7 @@
 from net import *
 from go import *
 import sys
+import os
 from features import getAllFeatures
 
 # set random seed
@@ -8,15 +9,17 @@ torch.manual_seed(0)
 torch.cuda.manual_seed_all(0)
 np.random.seed(0)
 
+programPath = os.path.dirname(os.path.realpath(__file__))
+
 # load net.pt
 policyNet = PolicyNetwork()
-policyNet.load_state_dict(torch.load('policyNet.pt'))
+policyNet.load_state_dict(torch.load(programPath + '/policyNet.pt'))
 
 playoutNet = PlayoutNetwork()
-playoutNet.load_state_dict(torch.load('playoutNet.pt'))
+playoutNet.load_state_dict(torch.load(programPath + '/playoutNet.pt'))
 
 valueNet = ValueNetwork()
-valueNet.load_state_dict(torch.load('valueNet.pt'))
+valueNet.load_state_dict(torch.load(programPath + '/valueNet.pt'))
 
 colorCharToIndex = {'B': 1, 'W': -1, 'b': 1, 'w': -1}
 indexToColorChar = {1: 'B', -1: 'W'}
