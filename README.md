@@ -48,7 +48,7 @@ pip install torch numpy sgfmill
 
 ```bash
 wget https://homepages.cwi.nl/~aeb/go/games/games.7z
-tar xvf games.7z
+7z x games.7z
 ```
 
 ```bash
@@ -74,7 +74,7 @@ python gtp.py
 
 ### 结果
 
-+ 策略网络训练的正确率达到 38%，和 [Mugo](https://github.com/brilee/MuGo) 使用相同数据的正确率相当。但和 AlphaGo 存在较大差距。
++ 策略网络训练的正确率达到 38%，和 [Mugo](https://github.com/brilee/MuGo) 使用相同数据的正确率相当。但和 AlphaGo（57%）存在较大差距。
 + 对于价值网络，直接训练过拟合严重，AlphaGo 的论文中也提到了这个问题。这是他们使用了强化学习的一个原因。
 
 策略网络（AI 执白）与人对弈的局面：
